@@ -1,0 +1,227 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Knowledge Card Sort</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@600;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: a projector-first "sorting table" — one big statement card above three bins whose numerals match the finger count. */
+:root{
+  --bg:#F3F7F6; --surface:#FFFFFF; --ink:#13302F; --muted:#56706E; --line:#D5E2DF;
+  --dec:#2F8178; --pro:#D94F2B; --reg:#5B4B8A;
+  --dec-soft:#E1F0EE; --pro-soft:#FBE6DF; --reg-soft:#ECE8F5;
+  --ok:#1F7A4D; --no:#B3261E;
+  --display:"Bitter", Cambria, Georgia, serif;
+  --body:"Atkinson Hyperlegible", Calibri, "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1A1A; --surface:#162625; --ink:#E6F0EE; --muted:#9FB5B2; --line:#2A3F3D;
+  --dec:#5CC2B5; --pro:#FF8A63; --reg:#AE9BEA;
+  --dec-soft:#173734; --pro-soft:#3A2119; --reg-soft:#272240;
+  --ok:#5FD49A; --no:#FF8A80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1A1A; --surface:#162625; --ink:#E6F0EE; --muted:#9FB5B2; --line:#2A3F3D;
+  --dec:#5CC2B5; --pro:#FF8A63; --reg:#AE9BEA;
+  --dec-soft:#173734; --pro-soft:#3A2119; --reg-soft:#272240;
+  --ok:#5FD49A; --no:#FF8A80; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 24px}
+.eyebrow{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.rule{color:var(--muted);margin:6px 0 0;max-width:62ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;color:inherit;cursor:pointer}
+.ghost{background:transparent;border:1.5px solid var(--line);border-radius:999px;padding:7px 14px;font-weight:700;font-size:.9rem}
+.ghost:hover{border-color:var(--muted)}
+:focus-visible{outline:3px solid var(--dec);outline-offset:2px}
+
+.dots{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dot{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);font-weight:700;font-size:.85rem;display:grid;place-items:center;color:var(--muted)}
+.dot.cur{border-color:var(--ink);color:var(--ink)}
+.dot.c1{background:var(--dec);border-color:var(--dec);color:var(--surface)}
+.dot.c2{background:var(--pro);border-color:var(--pro);color:var(--surface)}
+.dot.c3{background:var(--reg);border-color:var(--reg);color:var(--surface)}
+
+.stage{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:clamp(20px,4vw,40px);display:flex;flex-direction:column;gap:18px;min-height:230px;transition:border-color .25s}
+.stage.k1{border-color:var(--dec)}.stage.k2{border-color:var(--pro)}.stage.k3{border-color:var(--reg)}
+.letter{font-family:var(--display);font-weight:700;color:var(--muted);font-size:1rem;letter-spacing:.06em}
+.quote{font-family:var(--display);font-weight:700;font-size:clamp(1.5rem,4.2vw,2.6rem);line-height:1.2;margin:0;text-wrap:balance}
+.verdict[hidden]{display:none}
+.verdict{display:flex;flex-direction:column;gap:6px;border-top:1.5px dashed var(--line);padding-top:16px}
+.tag{align-self:flex-start;font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase;padding:4px 12px;border-radius:999px}
+.tag.k1{background:var(--dec-soft);color:var(--dec)}.tag.k2{background:var(--pro-soft);color:var(--pro)}.tag.k3{background:var(--reg-soft);color:var(--reg)}
+.why{margin:0;max-width:68ch;font-size:1.05rem}
+.discuss{margin:0;color:var(--muted);font-style:italic;max-width:68ch}
+.result{font-weight:700}.result.ok{color:var(--ok)}.result.no{color:var(--no)}
+
+.bins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.bin{display:flex;gap:14px;align-items:center;text-align:left;background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:14px 16px;transition:transform .12s,border-color .2s,background .2s}
+.bin:hover{transform:translateY(-2px)}
+.num{flex:none;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:1.7rem;color:var(--surface)}
+.b1 .num{background:var(--dec)}.b2 .num{background:var(--pro)}.b3 .num{background:var(--reg)}
+.bin b{display:block;font-size:1.05rem}
+.bin span.sub{color:var(--muted);font-size:.92rem}
+.bin.hit.b1{border-color:var(--dec);background:var(--dec-soft)}
+.bin.hit.b2{border-color:var(--pro);background:var(--pro-soft)}
+.bin.hit.b3{border-color:var(--reg);background:var(--reg-soft)}
+.bin.miss{opacity:.45}
+.bin.picked-wrong{border-color:var(--no);border-style:dashed}
+
+.nav{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.primary{background:var(--ink);color:var(--bg);border:0;border-radius:999px;padding:11px 22px;font-weight:700}
+.primary[disabled]{opacity:.4;cursor:default}
+.keys{color:var(--muted);font-size:.85rem}
+kbd{font-family:var(--body);font-size:.8rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 6px;background:var(--surface)}
+
+.board[hidden]{display:none}
+.board{display:flex;flex-direction:column;gap:14px}
+.board h2{font-family:var(--display);font-size:1.5rem;margin:0}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.col{border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.col.k1{background:var(--dec-soft)}.col.k2{background:var(--pro-soft)}.col.k3{background:var(--reg-soft)}
+.col h3{margin:0;font-size:1.05rem}
+.col.k1 h3{color:var(--dec)}.col.k2 h3{color:var(--pro)}.col.k3 h3{color:var(--reg)}
+.col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.col li{background:var(--surface);border-radius:10px;padding:10px 12px;font-size:.95rem}
+.col li em{color:var(--muted);font-style:normal;font-weight:700;margin-right:6px}
+.take{margin:0;max-width:72ch}
+
+@media (max-width:720px){
+  .bins,.cols{grid-template-columns:1fr}
+  .num{width:44px;height:44px;font-size:1.4rem}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Week 9 · Cognitive Views of Learning</div>
+      <h1>Which kind of knowledge?</h1>
+      <p class="rule">Read the statement. Show your answer with your fingers: <b>1</b> declarative, <b>2</b> procedural, <b>3</b> self-regulatory.</p>
+    </div>
+    <div class="tools">
+      <button class="ghost" id="restart" type="button">Start over</button>
+      <button class="ghost" id="toBoard" type="button">Show all answers</button>
+    </div>
+  </header>
+
+  <div class="dots" id="dots" aria-label="Statements"></div>
+
+  <section id="play" style="display:flex;flex-direction:column;gap:22px">
+    <article class="stage" id="stage" aria-live="polite">
+      <div class="letter" id="letter"></div>
+      <p class="quote" id="quote"></p>
+      <div class="verdict" id="verdict" hidden>
+        <span class="tag" id="tag"></span>
+        <span class="result" id="result"></span>
+        <p class="why" id="why"></p>
+        <p class="discuss" id="discuss"></p>
+      </div>
+    </article>
+
+    <div class="bins" id="bins">
+      <button class="bin b1" data-k="1" type="button"><span class="num">1</span><span><b>Declarative</b><span class="sub">Knowing <i>that</i></span></span></button>
+      <button class="bin b2" data-k="2" type="button"><span class="num">2</span><span><b>Procedural</b><span class="sub">Knowing <i>how</i></span></span></button>
+      <button class="bin b3" data-k="3" type="button"><span class="num">3</span><span><b>Self-regulatory</b><span class="sub">Knowing <i>when &amp; why</i></span></span></button>
+    </div>
+
+    <div class="nav">
+      <button class="ghost" id="prev" type="button">← Back</button>
+      <span class="keys"><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> choose · <kbd>Space</kbd> reveal · <kbd>→</kbd> next</span>
+      <div style="display:flex;gap:8px">
+        <button class="ghost" id="reveal" type="button">Reveal answer</button>
+        <button class="primary" id="next" type="button">Next →</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="board" id="board" hidden>
+    <h2>The sorted table</h2>
+    <div class="cols" id="cols"></div>
+    <p class="take"><b>Key point:</b> many students know the facts (1) and can do the skill (2), but still fail to use them at the right moment. That missing piece is self-regulatory knowledge (3).</p>
+    <div class="nav"><button class="ghost" id="back" type="button">← Back to the cards</button><span></span></div>
+  </section>
+</div>
+
+<script>
+const NAMES={1:"Declarative · knowing that",2:"Procedural · knowing how",3:"Self-regulatory · knowing when & why"};
+const SHORT={1:"Declarative",2:"Procedural",3:"Self-regulatory"};
+const ITEMS=[
+ {t:"I know that ‘went’ is the past form of ‘go’.",k:1,why:"A fact you can say or write down. You are stating a rule, not using it."},
+ {t:"I can write a formal email in English.",k:2,why:"A skill you show by doing. Knowing the format is declarative; actually writing the email is procedural."},
+ {t:"I know when to use a dictionary and when to guess from context.",k:3,why:"This is about choosing the right strategy for the moment. It is knowledge about when and why to use what you know.",d:"Some students say 2. Ask: is the student doing a skill, or deciding which skill to use?"},
+ {t:"I can pronounce ‘th’ correctly.",k:2,why:"Pronunciation is shown in action. You can know where the tongue goes (declarative) and still not be able to do it."},
+ {t:"I know that a sonnet has 14 lines.",k:1,why:"A fact about literature that can be stated in words. Writing a sonnet would be procedural."},
+ {t:"I notice I need to stop and reread when I don't understand a paragraph.",k:3,why:"Monitoring your own understanding and deciding to change what you do is managing your learning.",d:"Compare with ‘I can reread a paragraph’ (2). The noticing and deciding is what makes this a 3."},
+ {t:"I can scan a text to find a date.",k:2,why:"Scanning is a reading skill you perform. It becomes self-regulatory only when the statement is about knowing when to scan.",d:"Students often split between 2 and 3. Ask: does the sentence say ‘can do’ or ‘know when to do’?"},
+ {t:"I know that Hamlet is a prince of Denmark.",k:1,why:"A fact from the play that you can state. Interpreting Hamlet's choices in an essay would need more than declarative knowledge."}
+];
+const L="abcdefgh";
+let i=0; const state=ITEMS.map(()=>({shown:false,pick:null}));
+const $=id=>document.getElementById(id);
+
+function dots(){
+  $("dots").innerHTML=ITEMS.map((it,n)=>{
+    const s=state[n]; const c=s.shown?" c"+it.k:""; const cur=n===i&&!$("board").hidden===false?" cur":(n===i?" cur":"");
+    return `<button class="dot${c}${cur}" type="button" data-n="${n}" aria-label="Statement ${L[n]}">${L[n]}</button>`;
+  }).join("");
+  document.querySelectorAll(".dot").forEach(b=>b.onclick=()=>{i=+b.dataset.n;showPlay();render()});
+}
+function render(){
+  const it=ITEMS[i], s=state[i];
+  $("letter").textContent=`Statement ${L[i]} of ${L[ITEMS.length-1]}`;
+  $("quote").textContent="“"+it.t+"”";
+  $("stage").className="stage"+(s.shown?" k"+it.k:"");
+  $("verdict").hidden=!s.shown;
+  if(s.shown){
+    $("tag").className="tag k"+it.k; $("tag").textContent=it.k+" · "+NAMES[it.k];
+    $("why").textContent=it.why;
+    $("discuss").textContent=it.d?"Discuss: "+it.d:"";
+    $("discuss").hidden=!it.d;
+    const r=$("result");
+    if(s.pick==null){r.textContent="";r.className="result"}
+    else if(s.pick===it.k){r.textContent="Correct!";r.className="result ok"}
+    else{r.textContent="You chose "+s.pick+" ("+SHORT[s.pick]+"). The answer is "+it.k+".";r.className="result no"}
+  }
+  document.querySelectorAll(".bin").forEach(b=>{
+    const k=+b.dataset.k; b.className="bin b"+k;
+    if(s.shown){ if(k===it.k)b.classList.add("hit"); else b.classList.add("miss"); if(s.pick===k&&k!==it.k){b.classList.remove("miss");b.classList.add("picked-wrong")} }
+  });
+  $("prev").disabled=i===0;
+  $("reveal").hidden=s.shown;
+  $("next").textContent=i===ITEMS.length-1?"See the sorted table →":"Next →";
+  dots();
+}
+function choose(k){const s=state[i]; if(s.shown)return; s.pick=k; s.shown=true; render()}
+function reveal(){state[i].shown=true; render()}
+function next(){ if(i<ITEMS.length-1){i++;render()} else showBoard() }
+function prev(){ if(i>0){i--;render()} }
+function showBoard(){
+  ITEMS.forEach((_,n)=>state[n].shown=true);
+  $("cols").innerHTML=[1,2,3].map(k=>`<div class="col k${k}"><h3>${k} · ${NAMES[k]}</h3><ul>${ITEMS.map((it,n)=>it.k===k?`<li><em>${L[n]}</em>${it.t}</li>`:"").join("")}</ul></div>`).join("");
+  $("play").style.display="none"; $("board").hidden=false; dots();
+  document.querySelectorAll(".dot").forEach(d=>d.classList.remove("cur"));
+}
+function showPlay(){ $("board").hidden=true; $("play").style.display="flex"; }
+
+document.querySelectorAll(".bin").forEach(b=>b.onclick=()=>choose(+b.dataset.k));
+$("reveal").onclick=reveal; $("next").onclick=next; $("prev").onclick=prev;
+$("toBoard").onclick=showBoard; $("back").onclick=()=>{showPlay();render()};
+$("restart").onclick=()=>{state.forEach(s=>{s.shown=false;s.pick=null});i=0;showPlay();render()};
+document.addEventListener("keydown",e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey)return;
+  if(!$("board").hidden){ if(e.key==="ArrowLeft"){showPlay();render()} return }
+  if(["1","2","3"].includes(e.key))choose(+e.key);
+  else if(e.key===" "||e.key==="Enter"){ if(e.target.tagName==="BUTTON"&&e.key==="Enter")return; e.preventDefault(); state[i].shown?next():reveal() }
+  else if(e.key==="ArrowRight")next();
+  else if(e.key==="ArrowLeft")prev();
+});
+render();
+</script>
+
+</body></html>
